@@ -19,6 +19,7 @@ jobs:
           script: |
             cd /opt/shop-api
             git pull
+            psql -U postgres -d shop_api -f migrations/001_init.sql
             go build -o shop-api cmd/main.go
             sudo systemctl restart shop-api
             sudo systemctl status shop-api
