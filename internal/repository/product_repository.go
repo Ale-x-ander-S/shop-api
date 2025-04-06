@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"shop-api/internal/models"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -75,6 +76,9 @@ func (r *ProductRepository) Delete(ctx context.Context, id int64) error {
 }
 
 func (r *ProductRepository) GetAll(ctx context.Context) ([]*models.Product, error) {
+	// Искусственная задержка для демонстрации
+	time.Sleep(2 * time.Second)
+
 	rows, err := r.db.Query(ctx,
 		`SELECT id, name, description, price, stock, category, created_at, updated_at 
 		 FROM products 

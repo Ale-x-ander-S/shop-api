@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 	"shop-api/internal/models"
 	"time"
@@ -35,42 +34,30 @@ func NewRedisCache(addr string) *RedisCache {
 	}
 }
 
-func (c *RedisCache) GetProducts(ctx context.Context) ([]*models.Product, error) {
-	log.Printf("Trying to get products from cache")
-	val, err := c.client.Get(ctx, "products").Result()
-	if err == redis.Nil {
-		log.Printf("Products not found in cache")
-		return nil, nil
-	}
-	if err != nil {
-		log.Printf("Error getting products from cache: %v", err)
-		return nil, err
-	}
+func (r *RedisCache) GetProducts(ctx context.Context) ([]*models.Product, error) {
+	log.Printf("Redis: Trying to get products from cache")
 
 	var products []*models.Product
-	err = json.Unmarshal([]byte(val), &products)
+	err := r.client.Get(ctx, "products").Scan(&products)
 	if err != nil {
-		log.Printf("Error unmarshaling products from cache: %v", err)
+		log.Printf("Redis: Cache miss for products")
 		return nil, err
 	}
-	log.Printf("Successfully got %d products from cache", len(products))
-	return products, err
+
+	log.Printf("Redis: Cache hit for products, found %d items", len(products))
+	return products, nil
 }
 
-func (c *RedisCache) SetProducts(ctx context.Context, products []*models.Product) error {
-	log.Printf("Trying to cache %d products", len(products))
-	data, err := json.Marshal(products)
+func (r *RedisCache) SetProducts(ctx context.Context, products []*models.Product) error {
+	log.Printf("Redis: Setting %d products to cache", len(products))
+
+	err := r.client.Set(ctx, "products", products, 5*time.Minute).Err()
 	if err != nil {
-		log.Printf("Error marshaling products for cache: %v", err)
+		log.Printf("Redis: Error setting products to cache: %v", err)
 		return err
 	}
 
-	err = c.client.Set(ctx, "products", data, 5*time.Minute).Err()
-	if err != nil {
-		log.Printf("Error setting products in cache: %v", err)
-		return err
-	}
-	log.Printf("Successfully cached products")
+	log.Printf("Redis: Successfully cached %d products", len(products))
 	return nil
 }
 
