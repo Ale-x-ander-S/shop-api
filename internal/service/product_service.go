@@ -6,7 +6,6 @@ import (
 	"shop-api/internal/cache"
 	"shop-api/internal/models"
 	"shop-api/internal/repository"
-	"time"
 )
 
 type ProductService struct {
@@ -118,20 +117,25 @@ func (s *ProductService) DeleteProduct(ctx context.Context, id int64) error {
 	return nil
 }
 
-func (s *ProductService) GetProducts() ([]models.Product, error) {
-	var products []models.Product
-	err := s.cache.Get("products", &products)
-	if err == nil {
+func (s *ProductService) GetProducts() ([]*models.Product, error) {
+	// Пробуем получить из кэша
+	products, err := s.cache.GetProducts(context.Background())
+	if err == nil && len(products) > 0 {
 		s.fromCache = true
 		return products, nil
 	}
 
-	s.fromCache = false
-	products, err = s.repo.GetProducts()
+	// Если в кэше нет, получаем из БД
+	products, err = s.repo.GetAll(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	s.cache.Set("products", products, 5*time.Minute)
+	// Сохраняем в кэш
+	if err := s.cache.SetProducts(context.Background(), products); err != nil {
+		log.Printf("Error caching products: %v", err)
+	}
+
+	s.fromCache = false
 	return products, nil
 }

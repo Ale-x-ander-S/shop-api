@@ -44,7 +44,11 @@ func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Cache", "MISS")
 	}
 
-	json.NewEncoder(w).Encode(products)
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(products); err != nil {
+		http.Error(w, "Failed to encode products", http.StatusInternalServerError)
+		return
+	}
 }
 
 // CreateProduct godoc
