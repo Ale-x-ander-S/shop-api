@@ -22,16 +22,23 @@ func NewProductHandler(service *service.ProductService) *ProductHandler {
 	return &ProductHandler{service: service}
 }
 
-// @Summary Create a new product
-// @Description Create a new product with the provided details
+// @title Shop API
+// @version 1.0
+// @description REST API для интернет-магазина
+// @host 91.105.199.172:8080
+// @BasePath /api
+// @schemes http
+
+// @Summary Создать новый продукт
+// @Description Создает новый продукт в магазине
 // @Tags products
 // @Accept json
 // @Produce json
-// @Param product body models.Product true "Product details"
-// @Success 201 {object} models.Product
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/products [post]
+// @Param product body models.CreateProductRequest true "Данные продукта"
+// @Success 201 {object} map[string]int
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /products [post]
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	var req models.CreateProductRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -50,15 +57,14 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(createdProduct)
 }
 
-// @Summary Get all products
-// @Description Get a list of all products
+// @Summary Получить все продукты
+// @Description Возвращает список всех продуктов
 // @Tags products
-// @Accept json
 // @Produce json
 // @Success 200 {array} models.Product
-// @Failure 500 {object} map[string]string
-// @Router /api/products [get]
-func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) {
+// @Failure 500 {string} string
+// @Router /products [get]
+func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	products, err := h.service.GetAllProducts(r.Context())
 	if err != nil {
 		http.Error(w, "Failed to get products", http.StatusInternalServerError)
@@ -69,17 +75,16 @@ func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(products)
 }
 
-// @Summary Get a product by ID
-// @Description Get a product by its ID
+// @Summary Получить продукт по ID
+// @Description Возвращает информацию о продукте по его ID
 // @Tags products
-// @Accept json
 // @Produce json
-// @Param id path int true "Product ID"
+// @Param id path int true "ID продукта"
 // @Success 200 {object} models.Product
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/products/{id} [get]
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
+// @Router /products/{id} [get]
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -101,18 +106,16 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
-// @Summary Update a product
-// @Description Update a product with the provided details
+// @Summary Обновить продукт
+// @Description Обновляет информацию о продукте
 // @Tags products
 // @Accept json
-// @Produce json
-// @Param id path int true "Product ID"
-// @Param product body models.Product true "Product details"
-// @Success 200 {object} models.Product
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/products/{id} [put]
+// @Param id path int true "ID продукта"
+// @Param product body models.UpdateProductRequest true "Данные для обновления"
+// @Success 204 "No Content"
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /products/{id} [put]
 func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
@@ -138,17 +141,14 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// @Summary Delete a product
-// @Description Delete a product by its ID
+// @Summary Удалить продукт
+// @Description Удаляет продукт по его ID
 // @Tags products
-// @Accept json
-// @Produce json
-// @Param id path int true "Product ID"
+// @Param id path int true "ID продукта"
 // @Success 204 "No Content"
-// @Failure 400 {object} map[string]string
-// @Failure 404 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/products/{id} [delete]
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /products/{id} [delete]
 func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {

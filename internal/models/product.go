@@ -16,17 +16,17 @@ type Product struct {
 }
 
 type CreateProductRequest struct {
-	Name        string  `json:"name" validate:"required"`
-	Description string  `json:"description" validate:"required"`
-	Price       float64 `json:"price" validate:"required,gt=0"`
-	Stock       int     `json:"stock" validate:"required,gte=0"`
-	Category    string  `json:"category"`
+	Name        string  `json:"name" binding:"required"`
+	Description string  `json:"description" binding:"required"`
+	Price       float64 `json:"price" binding:"required"`
+	Stock       int     `json:"stock" binding:"required,min=0"`
+	Category    string  `json:"category" binding:"required"`
 }
 
 type UpdateProductRequest struct {
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Price       float64 `json:"price" validate:"gt=0"`
-	Stock       int     `json:"stock" validate:"gte=0"`
-	Category    string  `json:"category"`
+	Name        string  `json:"name,omitempty"`
+	Description string  `json:"description,omitempty"`
+	Price       float64 `json:"price,omitempty"`
+	Stock       int     `json:"stock,omitempty" binding:"min=0"`
+	Category    string  `json:"category,omitempty"`
 }

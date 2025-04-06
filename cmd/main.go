@@ -17,6 +17,7 @@ import (
 	"shop-api/pkg/config"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
@@ -53,19 +54,21 @@ func main() {
 	// Создание роутера
 	r := chi.NewRouter()
 
-	// CORS middleware
+	// Middleware
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
-			w.Header().Set("Access-Control-Max-Age", "3600")
 
 			if r.Method == "OPTIONS" {
 				w.WriteHeader(http.StatusOK)
 				return
 			}
+
 			next.ServeHTTP(w, r)
 		})
 	})
@@ -73,18 +76,6 @@ func main() {
 	// Swagger UI
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://91.105.199.172:8080/swagger/doc.json"),
-		httpSwagger.DocExpansion("none"),
-		httpSwagger.DomID("swagger-ui"),
-		httpSwagger.UIConfig(map[string]string{
-			"defaultModelsExpandDepth": "-1",
-			"displayRequestDuration":   "true",
-			"filter":                   "true",
-			"showExtensions":           "true",
-			"showCommonExtensions":     "true",
-			"persistAuthorization":     "true",
-			"deepLinking":              "true",
-			"syntaxHighlight.theme":    "monokai",
-		}),
 	))
 
 	// Регистрация маршрутов
