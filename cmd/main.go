@@ -24,7 +24,7 @@ import (
 // @title Shop API
 // @version 1.0
 // @description REST API для интернет-магазина
-// @host localhost:8080
+// @host 91.105.199.172:8080
 // @BasePath /api
 // @schemes http
 func main() {
@@ -53,9 +53,24 @@ func main() {
 	// Создание роутера
 	r := chi.NewRouter()
 
+	// CORS middleware
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	})
+
 	// Swagger UI
 	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+		httpSwagger.URL("http://91.105.199.172:8080/swagger/doc.json"),
 	))
 
 	// Регистрация маршрутов
@@ -69,7 +84,7 @@ func main() {
 
 	// Запуск сервера
 	server := &http.Server{
-		Addr:    ":" + cfg.ServerPort,
+		Addr:    "0.0.0.0:" + cfg.ServerPort,
 		Handler: r,
 	}
 
