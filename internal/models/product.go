@@ -5,15 +5,15 @@ import (
 )
 
 type Product struct {
-	ID          int64     `json:"id"`
-	Name        string    `json:"name"`
-	Description string    `json:"description"`
-	Price       float64   `json:"price"`
-	Stock       int       `json:"stock"`
-	Category    string    `json:"category"`
-	ImageURL    string    `json:"image_url"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID          int64     `json:"id" redis:"id"`
+	Name        string    `json:"name" redis:"name"`
+	Description string    `json:"description" redis:"description"`
+	Price       float64   `json:"price" redis:"price"`
+	Stock       int       `json:"stock" redis:"stock"`
+	Category    string    `json:"category" redis:"category"`
+	ImageURL    string    `json:"image_url" redis:"image_url"`
+	CreatedAt   time.Time `json:"created_at" redis:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at" redis:"updated_at"`
 }
 
 type CreateProductRequest struct {
