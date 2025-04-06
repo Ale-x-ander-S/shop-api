@@ -27,6 +27,8 @@ func (s *ProductService) IsFromCache() bool {
 }
 
 func (s *ProductService) GetAllProducts(ctx context.Context) ([]*models.Product, error) {
+	s.fromCache = false // Сбрасываем флаг в начале метода
+
 	// Пробуем получить из кэша
 	products, err := s.cache.GetProducts(ctx)
 	if err == nil && len(products) > 0 {
@@ -47,7 +49,6 @@ func (s *ProductService) GetAllProducts(ctx context.Context) ([]*models.Product,
 		log.Printf("Error caching products: %v", err)
 	}
 
-	s.fromCache = false
 	return products, nil
 }
 
