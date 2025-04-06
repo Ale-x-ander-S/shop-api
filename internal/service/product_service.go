@@ -116,26 +116,3 @@ func (s *ProductService) DeleteProduct(ctx context.Context, id int64) error {
 	s.fromCache = false
 	return nil
 }
-
-func (s *ProductService) GetProducts() ([]*models.Product, error) {
-	// Пробуем получить из кэша
-	products, err := s.cache.GetProducts(context.Background())
-	if err == nil && len(products) > 0 {
-		s.fromCache = true
-		return products, nil
-	}
-
-	// Если в кэше нет, получаем из БД
-	products, err = s.repo.GetAll(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
-	// Сохраняем в кэш
-	if err := s.cache.SetProducts(context.Background(), products); err != nil {
-		log.Printf("Error caching products: %v", err)
-	}
-
-	s.fromCache = false
-	return products, nil
-}

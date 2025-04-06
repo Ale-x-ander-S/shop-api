@@ -31,7 +31,7 @@ func NewProductHandler(service *service.ProductService) *ProductHandler {
 // @Failure 500 {string} string
 // @Router /products [get]
 func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := h.service.GetProducts()
+	products, err := h.service.GetAllProducts(r.Context())
 	if err != nil {
 		http.Error(w, "Failed to get products", http.StatusInternalServerError)
 		return
