@@ -16,11 +16,13 @@ jobs:
         echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
         eval $(ssh-agent -s)
-        ssh-add ~/.ssh/deploy_key
+        ssh-add -v ~/.ssh/deploy_key
         ssh-keyscan -H 91.105.199.172 >> ~/.ssh/known_hosts
+        ls -la ~/.ssh/
+        cat ~/.ssh/deploy_key
 
     - name: Test SSH Connection
-      run: ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no root@91.105.199.172 'echo "SSH Connection Successful"'
+      run: ssh -v -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no root@91.105.199.172 'echo "SSH Connection Successful"'
 
     - name: Copy files to server
       uses: appleboy/scp-action@master
