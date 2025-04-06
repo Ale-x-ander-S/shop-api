@@ -79,12 +79,14 @@ func main() {
 	))
 
 	// Регистрация маршрутов
-	r.Route("/api/products", func(r chi.Router) {
-		r.Post("/", productHandler.CreateProduct)
-		r.Get("/", productHandler.GetAllProducts)
-		r.Get("/{id}", productHandler.GetProduct)
-		r.Put("/{id}", productHandler.UpdateProduct)
-		r.Delete("/{id}", productHandler.DeleteProduct)
+	r.Route("/api", func(r chi.Router) {
+		r.Route("/products", func(r chi.Router) {
+			r.Get("/", productHandler.GetProducts)
+			r.Post("/", productHandler.CreateProduct)
+			r.Get("/{id}", productHandler.GetProduct)
+			r.Put("/{id}", productHandler.UpdateProduct)
+			r.Delete("/{id}", productHandler.DeleteProduct)
+		})
 	})
 
 	// Запуск сервера
