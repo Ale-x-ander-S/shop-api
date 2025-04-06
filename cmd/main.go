@@ -11,6 +11,7 @@ import (
 	"time"
 
 	_ "shop-api/docs"
+	"shop-api/internal/cache"
 	"shop-api/internal/handlers"
 	"shop-api/internal/repository"
 	"shop-api/internal/service"
@@ -46,9 +47,12 @@ func main() {
 	}
 	defer db.Close()
 
+	// Redis cache
+	redisCache := cache.NewRedisCache("91.105.199.172:6379")
+
 	// Инициализация репозитория, сервиса и обработчиков
 	productRepo := repository.NewProductRepository(db)
-	productService := service.NewProductService(productRepo)
+	productService := service.NewProductService(productRepo, redisCache)
 	productHandler := handlers.NewProductHandler(productService)
 
 	// Создание роутера

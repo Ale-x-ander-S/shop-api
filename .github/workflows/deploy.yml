@@ -44,6 +44,18 @@ jobs:
         script: |
           cd /opt/shop-api
           
+          # Install Redis if not exists
+          if ! command -v redis-server &> /dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y redis-server
+            sudo systemctl enable redis-server
+            sudo systemctl start redis-server
+          fi
+          
+          # Configure Redis to listen on all interfaces
+          sudo sed -i 's/bind 127.0.0.1/bind 0.0.0.0/' /etc/redis/redis.conf
+          sudo systemctl restart redis-server
+          
           # Install swag if not exists
           if ! command -v ~/go/bin/swag &> /dev/null; then
             go install github.com/swaggo/swag/cmd/swag@latest
@@ -67,5 +79,6 @@ jobs:
           # Verify Swagger
           curl -s http://91.105.199.172:8080/swagger/doc.json | grep host
           
-          # Check service status
+          # Check services
+          sudo systemctl status redis-server
           sudo systemctl status shop-api
