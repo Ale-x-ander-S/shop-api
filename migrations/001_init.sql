@@ -3,11 +3,19 @@ CREATE TABLE IF NOT EXISTS products (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     price DECIMAL(10,2) NOT NULL,
-    stock INTEGER NOT NULL DEFAULT 0,
-    category VARCHAR(100) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    stock INTEGER DEFAULT 0,
+    category VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Тестовые данные
+INSERT INTO products (name, description, price, stock, category) 
+VALUES 
+    ('Test Product 1', 'Description 1', 99.99, 10, 'Electronics'),
+    ('Test Product 2', 'Description 2', 149.99, 5, 'Books'),
+    ('Test Product 3', 'Description 3', 199.99, 15, 'Clothing')
+ON CONFLICT DO NOTHING;
 
 -- Тестовые продукты
 INSERT INTO products (name, description, price, stock, category) VALUES

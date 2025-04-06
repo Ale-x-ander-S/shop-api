@@ -1,4 +1,4 @@
-name: Deploy API
+name: Deploy
 
 on:
   push:
@@ -8,42 +8,37 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Deploy to server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SELECTEL_HOST }}
-          username: ${{ secrets.SELECTEL_USERNAME }}
-          key: ${{ secrets.SELECTEL_SSH_KEY }}
-          script: |
-            # Переходим в директорию проекта
-            cd /opt/shop-api || exit 1
-            
-            # Настраиваем git
-            git config --global --add safe.directory /opt/shop-api
-            git branch --set-upstream-to=origin/main main || exit 1
-            
-            # Обновляем код
-            git reset --hard origin/main || exit 1
-            git clean -fd || exit 1
-            git pull || exit 1
-            
-            # Применяем миграции с правильными параметрами подключения
-            PGPASSWORD=${{ secrets.POSTGRES_PASSWORD }} psql -h localhost -U postgres -d shop -f migrations/001_init.sql || exit 1
-            
-            # Собираем приложение
-            go build -o shop-api cmd/main.go || exit 1
-            
-            # Перезапускаем сервис
-            sudo systemctl stop shop-api || exit 1
-            sudo systemctl start shop-api || exit 1
-            
-            # Проверяем статус
-            sudo systemctl status shop-api || exit 1
-            
-            # Ждем 5 секунд
-            sleep 5
-            
-            # Проверяем API
-            curl -I http://91.105.199.172:8080/api/products || exit 1
+    - uses: actions/checkout@v2
+
+    - name: Copy files to server
+      uses: appleboy/scp-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        source: "."
+        target: "/opt/shop-api"
+
+    - name: Execute deploy commands
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd /opt/shop-api
+          
+          # Backup DB
+          PGPASSWORD=${{ secrets.DB_PASSWORD }} pg_dump -h localhost -U postgres shop > backup_$(date +%Y%m%d_%H%M%S).sql
+          
+          # Apply migrations
+          PGPASSWORD=${{ secrets.DB_PASSWORD }} psql -h localhost -U postgres -d shop -f migrations/001_init.sql
+          
+          # Build
+          go build -o shop-api cmd/main.go
+          
+          # Restart service
+          sudo systemctl restart shop-api
+          
+          # Check service status
+          sudo systemctl status shop-api
