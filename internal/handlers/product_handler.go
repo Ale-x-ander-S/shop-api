@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -33,12 +34,17 @@ func NewProductHandler(service *service.ProductService) *ProductHandler {
 func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
 	products, err := h.service.GetAllProducts(r.Context())
 	if err != nil {
+		log.Printf("Error getting products: %v", err)
 		http.Error(w, "Failed to get products", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(products)
+	if err := json.NewEncoder(w).Encode(products); err != nil {
+		log.Printf("Error encoding products: %v", err)
+		http.Error(w, "Failed to encode products", http.StatusInternalServerError)
+		return
+	}
 }
 
 // CreateProduct godoc
