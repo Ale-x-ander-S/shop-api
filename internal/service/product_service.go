@@ -16,8 +16,9 @@ type ProductService struct {
 
 func NewProductService(repo repository.ProductRepository, cache *cache.RedisCache) *ProductService {
 	return &ProductService{
-		repo:  repo,
-		cache: cache,
+		repo:      repo,
+		cache:     cache,
+		fromCache: false,
 	}
 }
 
