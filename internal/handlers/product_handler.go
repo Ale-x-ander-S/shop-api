@@ -22,13 +22,26 @@ func NewProductHandler(service *service.ProductService) *ProductHandler {
 	return &ProductHandler{service: service}
 }
 
-// @title Shop API
-// @version 1.0
-// @description REST API для интернет-магазина
-// @host 91.105.199.172:8080
-// @BasePath /api
-// @schemes http
+// GetProducts godoc
+// @Summary Получить все продукты
+// @Description Возвращает список всех продуктов
+// @Tags products
+// @Produce json
+// @Success 200 {array} models.Product
+// @Failure 500 {string} string
+// @Router /products [get]
+func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
+	products, err := h.service.GetAllProducts(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to get products", http.StatusInternalServerError)
+		return
+	}
 
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(products)
+}
+
+// CreateProduct godoc
 // @Summary Создать новый продукт
 // @Description Создает новый продукт в магазине
 // @Tags products
@@ -57,24 +70,7 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(createdProduct)
 }
 
-// @Summary Получить все продукты
-// @Description Возвращает список всех продуктов
-// @Tags products
-// @Produce json
-// @Success 200 {array} models.Product
-// @Failure 500 {string} string
-// @Router /products [get]
-func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := h.service.GetAllProducts(r.Context())
-	if err != nil {
-		http.Error(w, "Failed to get products", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(products)
-}
-
+// GetProduct godoc
 // @Summary Получить продукт по ID
 // @Description Возвращает информацию о продукте по его ID
 // @Tags products
@@ -106,6 +102,7 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
+// UpdateProduct godoc
 // @Summary Обновить продукт
 // @Description Обновляет информацию о продукте
 // @Tags products
@@ -141,6 +138,7 @@ func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// DeleteProduct godoc
 // @Summary Удалить продукт
 // @Description Удаляет продукт по его ID
 // @Tags products
