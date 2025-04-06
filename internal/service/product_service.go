@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 	"shop-api/internal/cache"
 	"shop-api/internal/models"
 	"shop-api/internal/repository"
@@ -27,8 +28,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, req *models.CreatePr
 
 	// Инвалидируем кэш при создании нового продукта
 	if err := s.cache.InvalidateProducts(ctx); err != nil {
-		// Логируем ошибку, но продолжаем работу
-		// log.Printf("Failed to invalidate cache: %v", err)
+		log.Printf("Failed to invalidate cache: %v", err)
 	}
 
 	return product, nil
@@ -46,8 +46,7 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id int64, req *model
 
 	// Инвалидируем кэш при обновлении продукта
 	if err := s.cache.InvalidateProducts(ctx); err != nil {
-		// Логируем ошибку, но продолжаем работу
-		// log.Printf("Failed to invalidate cache: %v", err)
+		log.Printf("Failed to invalidate cache: %v", err)
 	}
 
 	return nil
@@ -61,8 +60,7 @@ func (s *ProductService) DeleteProduct(ctx context.Context, id int64) error {
 
 	// Инвалидируем кэш при удалении продукта
 	if err := s.cache.InvalidateProducts(ctx); err != nil {
-		// Логируем ошибку, но продолжаем работу
-		// log.Printf("Failed to invalidate cache: %v", err)
+		log.Printf("Failed to invalidate cache: %v", err)
 	}
 
 	return nil
@@ -71,6 +69,7 @@ func (s *ProductService) DeleteProduct(ctx context.Context, id int64) error {
 func (s *ProductService) GetAllProducts(ctx context.Context) ([]*models.Product, error) {
 	// Пробуем получить из кэша
 	if products, err := s.cache.GetProducts(ctx); err == nil && products != nil {
+		log.Printf("Cache hit: returning %d products from cache", len(products))
 		return products, nil
 	}
 
@@ -82,20 +81,10 @@ func (s *ProductService) GetAllProducts(ctx context.Context) ([]*models.Product,
 
 	// Сохраняем в кэш
 	if err := s.cache.SetProducts(ctx, products); err != nil {
-		// Логируем ошибку, но продолжаем работу
-		// log.Printf("Failed to cache products: %v", err)
+		log.Printf("Failed to cache products: %v", err)
+	} else {
+		log.Printf("Cached %d products", len(products))
 	}
 
 	return products, nil
-}
-
-func (s *ProductService) CreateProduct(ctx context.Context, product models.CreateProductRequest) (int, error) {
-	id, err := s.repo.Create(ctx, product)
-	if err != nil {
-		return 0, err
-	}
-
-	// Инвалидируем кэш при создании нового продукта
-	s.cache.InvalidateProducts(ctx)
-	return id, nil
 }
