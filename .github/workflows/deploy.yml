@@ -29,8 +29,8 @@ jobs:
             git clean -fd || exit 1
             git pull || exit 1
             
-            # Применяем миграции
-            psql -U postgres -d shop_api -f migrations/001_init.sql || exit 1
+            # Применяем миграции с правильными параметрами подключения
+            PGPASSWORD=${{ secrets.POSTGRES_PASSWORD }} psql -h localhost -U postgres -d shop_api -f migrations/001_init.sql || exit 1
             
             # Собираем приложение
             go build -o shop-api cmd/main.go || exit 1
