@@ -2,12 +2,14 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"shop-api/internal/models"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+var ErrProductNotFound = errors.New("product not found")
 
 type ProductRepository struct {
 	db *pgxpool.Pool
@@ -17,15 +19,19 @@ func NewProductRepository(db *pgxpool.Pool) *ProductRepository {
 	return &ProductRepository{db: db}
 }
 
-func (r *ProductRepository) Create(ctx context.Context, product *models.CreateProductRequest) (int64, error) {
-	var id int64
+func (r *ProductRepository) Create(ctx context.Context, req *models.CreateProductRequest) (*models.Product, error) {
+	var product models.Product
 	err := r.db.QueryRow(ctx,
-		`INSERT INTO products (name, description, price, stock, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id`,
-		product.Name, product.Description, product.Price, product.Stock, time.Now(), time.Now(),
-	).Scan(&id)
-	return id, err
+		`INSERT INTO products (name, description, price) 
+		 VALUES ($1, $2, $3) 
+		 RETURNING id, name, description, price, created_at, updated_at`,
+		req.Name, req.Description, req.Price,
+	).Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.CreatedAt, &product.UpdatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+	return &product, nil
 }
 
 func (r *ProductRepository) GetByID(ctx context.Context, id int64) (*models.Product, error) {
@@ -41,18 +47,21 @@ func (r *ProductRepository) GetByID(ctx context.Context, id int64) (*models.Prod
 	return product, err
 }
 
-func (r *ProductRepository) Update(ctx context.Context, id int64, product *models.UpdateProductRequest) error {
-	_, err := r.db.Exec(ctx,
+func (r *ProductRepository) Update(ctx context.Context, id int64, req *models.UpdateProductRequest) error {
+	result, err := r.db.Exec(ctx,
 		`UPDATE products 
-		SET name = COALESCE($1, name),
-			description = COALESCE($2, description),
-			price = COALESCE($3, price),
-			stock = COALESCE($4, stock),
-			updated_at = $5
-		WHERE id = $6`,
-		product.Name, product.Description, product.Price, product.Stock, time.Now(), id,
+		 SET name = $1, description = $2, price = $3, updated_at = NOW() 
+		 WHERE id = $4`,
+		req.Name, req.Description, req.Price, id,
 	)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if result.RowsAffected() == 0 {
+		return ErrProductNotFound
+	}
+	return nil
 }
 
 func (r *ProductRepository) Delete(ctx context.Context, id int64) error {
