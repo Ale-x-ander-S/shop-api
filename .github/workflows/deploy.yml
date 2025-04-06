@@ -44,5 +44,8 @@ jobs:
             cd /opt/shop-api
             git fetch --all
             git reset --hard origin/main
+            chmod -R 755 /opt/shop-api
+            chown -R root:root /opt/shop-api
             go build -o shop-api cmd/main.go
+            chmod +x shop-api
             systemctl restart shop-api
