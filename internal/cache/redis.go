@@ -25,7 +25,7 @@ func NewRedisCache(addr string) *RedisCache {
 	}
 }
 
-func (c *RedisCache) GetProducts(ctx context.Context) ([]models.Product, error) {
+func (c *RedisCache) GetProducts(ctx context.Context) ([]*models.Product, error) {
 	val, err := c.client.Get(ctx, "products").Result()
 	if err == redis.Nil {
 		return nil, nil
@@ -34,12 +34,12 @@ func (c *RedisCache) GetProducts(ctx context.Context) ([]models.Product, error) 
 		return nil, err
 	}
 
-	var products []models.Product
+	var products []*models.Product
 	err = json.Unmarshal([]byte(val), &products)
 	return products, err
 }
 
-func (c *RedisCache) SetProducts(ctx context.Context, products []models.Product) error {
+func (c *RedisCache) SetProducts(ctx context.Context, products []*models.Product) error {
 	data, err := json.Marshal(products)
 	if err != nil {
 		return err

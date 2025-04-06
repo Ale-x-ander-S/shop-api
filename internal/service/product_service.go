@@ -20,7 +20,18 @@ func NewProductService(repo *repository.ProductRepository, cache *cache.RedisCac
 }
 
 func (s *ProductService) CreateProduct(ctx context.Context, req *models.CreateProductRequest) (*models.Product, error) {
-	return s.repo.Create(ctx, req)
+	product, err := s.repo.Create(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Инвалидируем кэш при создании нового продукта
+	if err := s.cache.InvalidateProducts(ctx); err != nil {
+		// Логируем ошибку, но продолжаем работу
+		// log.Printf("Failed to invalidate cache: %v", err)
+	}
+
+	return product, nil
 }
 
 func (s *ProductService) GetProduct(ctx context.Context, id int64) (*models.Product, error) {
@@ -28,11 +39,33 @@ func (s *ProductService) GetProduct(ctx context.Context, id int64) (*models.Prod
 }
 
 func (s *ProductService) UpdateProduct(ctx context.Context, id int64, req *models.UpdateProductRequest) error {
-	return s.repo.Update(ctx, id, req)
+	err := s.repo.Update(ctx, id, req)
+	if err != nil {
+		return err
+	}
+
+	// Инвалидируем кэш при обновлении продукта
+	if err := s.cache.InvalidateProducts(ctx); err != nil {
+		// Логируем ошибку, но продолжаем работу
+		// log.Printf("Failed to invalidate cache: %v", err)
+	}
+
+	return nil
 }
 
 func (s *ProductService) DeleteProduct(ctx context.Context, id int64) error {
-	return s.repo.Delete(ctx, id)
+	err := s.repo.Delete(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// Инвалидируем кэш при удалении продукта
+	if err := s.cache.InvalidateProducts(ctx); err != nil {
+		// Логируем ошибку, но продолжаем работу
+		// log.Printf("Failed to invalidate cache: %v", err)
+	}
+
+	return nil
 }
 
 func (s *ProductService) GetAllProducts(ctx context.Context) ([]*models.Product, error) {
