@@ -1,4 +1,4 @@
-name: Deploy to Server
+name: Deploy API
 
 on:
   push:
@@ -10,42 +10,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: '1.21'
-      
-      - name: Build
-        run: go build -o shop-api cmd/main.go
-      
-      - name: Check Secrets
-        run: |
-          echo "Checking secrets..."
-          if [ -z "${{ secrets.SELECTEL_HOST }}" ]; then
-            echo "SELECTEL_HOST is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.SELECTEL_USERNAME }}" ]; then
-            echo "SELECTEL_USERNAME is not set"
-            exit 1
-          fi
-          if [ -z "${{ secrets.SELECTEL_SSH_KEY }}" ]; then
-            echo "SELECTEL_SSH_KEY is not set"
-            exit 1
-          fi
-      
-      - name: Deploy to Server
+      - name: Deploy to server
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SELECTEL_HOST }}
-          username: ${{ secrets.SELECTEL_USERNAME }}
-          key: ${{ secrets.SELECTEL_SSH_KEY }}
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             cd /opt/shop-api
-            git fetch --all
-            git reset --hard origin/main
-            chmod -R 755 /opt/shop-api
-            chown -R root:root /opt/shop-api
+            git pull
             go build -o shop-api cmd/main.go
-            chmod +x shop-api
-            systemctl restart shop-api
+            sudo systemctl restart shop-api
+            sudo systemctl status shop-api
