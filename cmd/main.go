@@ -73,6 +73,15 @@ func main() {
 	// Swagger UI
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://91.105.199.172:8080/swagger/doc.json"),
+		httpSwagger.DocExpansion("none"),
+		httpSwagger.DomID("swagger-ui"),
+		httpSwagger.UIConfig(map[string]string{
+			"defaultModelsExpandDepth": "-1",
+			"displayRequestDuration":   "true",
+			"filter":                   "true",
+			"showExtensions":           "true",
+			"showCommonExtensions":     "true",
+		}),
 	))
 
 	// Регистрация маршрутов
