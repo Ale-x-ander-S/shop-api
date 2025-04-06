@@ -44,6 +44,14 @@ jobs:
         script: |
           cd /opt/shop-api
           
+          # Install swag if not exists
+          if ! command -v ~/go/bin/swag &> /dev/null; then
+            go install github.com/swaggo/swag/cmd/swag@latest
+          fi
+          
+          # Generate Swagger docs
+          ~/go/bin/swag init -g cmd/main.go
+          
           # Backup DB
           PGPASSWORD=${{ secrets.POSTGRES_PASSWORD }} pg_dump -h localhost -U postgres shop > backup_$(date +%Y%m%d_%H%M%S).sql
           
@@ -55,6 +63,9 @@ jobs:
           
           # Restart service
           sudo systemctl restart shop-api
+          
+          # Verify Swagger
+          curl -s http://91.105.199.172:8080/swagger/doc.json | grep host
           
           # Check service status
           sudo systemctl status shop-api
