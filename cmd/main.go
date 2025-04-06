@@ -58,8 +58,10 @@ func main() {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Access-Control-Allow-Origin", "*")
 			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Max-Age", "3600")
+
 			if r.Method == "OPTIONS" {
 				w.WriteHeader(http.StatusOK)
 				return
@@ -71,6 +73,15 @@ func main() {
 	// Swagger UI
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("http://91.105.199.172:8080/swagger/doc.json"),
+		httpSwagger.DocExpansion("none"),
+		httpSwagger.DomID("swagger-ui"),
+		httpSwagger.UIConfig(map[string]string{
+			"defaultModelsExpandDepth": "-1",
+			"displayRequestDuration":   "true",
+			"filter":                   "true",
+			"showExtensions":           "true",
+			"showCommonExtensions":     "true",
+		}),
 	))
 
 	// Регистрация маршрутов
@@ -84,8 +95,11 @@ func main() {
 
 	// Запуск сервера
 	server := &http.Server{
-		Addr:    "0.0.0.0:" + cfg.ServerPort,
-		Handler: r,
+		Addr:         "0.0.0.0:" + cfg.ServerPort,
+		Handler:      r,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	// Graceful shutdown
