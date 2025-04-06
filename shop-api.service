@@ -1,0 +1,16 @@
+[Unit]
+Description=Shop API Service
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=deploy
+Group=deploy
+WorkingDirectory=/home/deploy/shop-api
+EnvironmentFile=/home/deploy/shop-api/.env
+ExecStart=/home/deploy/shop-api/main
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target 

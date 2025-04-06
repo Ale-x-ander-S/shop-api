@@ -1,0 +1,41 @@
+name: Deploy to Selectel VDS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Build
+        run: |
+          go mod download
+          CGO_ENABLED=0 GOOS=linux go build -o main ./cmd
+
+      - name: Deploy to Selectel VDS
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SELECTEL_HOST }}
+          username: ${{ secrets.SELECTEL_USERNAME }}
+          key: ${{ secrets.SELECTEL_SSH_KEY }}
+          source: "main"
+          target: "/home/deploy/shop-api"
+          strip_components: 0
+
+      - name: Restart service
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SELECTEL_HOST }}
+          username: ${{ secrets.SELECTEL_USERNAME }}
+          key: ${{ secrets.SELECTEL_SSH_KEY }}
+          script: |
+            cd /home/deploy/shop-api
+            sudo systemctl restart shop-api 
