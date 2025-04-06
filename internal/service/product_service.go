@@ -15,12 +15,7 @@ func NewProductService(repo *repository.ProductRepository) *ProductService {
 }
 
 func (s *ProductService) CreateProduct(ctx context.Context, req *models.CreateProductRequest) (*models.Product, error) {
-	product := &models.Product{
-		Name:        req.Name,
-		Description: req.Description,
-		Price:       req.Price,
-	}
-	return s.repo.Create(ctx, product)
+	return s.repo.Create(ctx, req)
 }
 
 func (s *ProductService) GetProduct(ctx context.Context, id int64) (*models.Product, error) {
