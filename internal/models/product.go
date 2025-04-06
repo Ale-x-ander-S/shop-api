@@ -11,6 +11,7 @@ type Product struct {
 	Price       float64   `json:"price"`
 	Stock       int       `json:"stock"`
 	Category    string    `json:"category"`
+	ImageURL    string    `json:"image_url"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -21,6 +22,7 @@ type CreateProductRequest struct {
 	Price       float64 `json:"price" binding:"required"`
 	Stock       int     `json:"stock" binding:"required,min=0"`
 	Category    string  `json:"category" binding:"required"`
+	ImageURL    string  `json:"image_url"`
 }
 
 type UpdateProductRequest struct {
@@ -29,4 +31,5 @@ type UpdateProductRequest struct {
 	Price       float64 `json:"price,omitempty"`
 	Stock       int     `json:"stock,omitempty" binding:"min=0"`
 	Category    string  `json:"category,omitempty"`
+	ImageURL    string  `json:"image_url,omitempty"`
 }

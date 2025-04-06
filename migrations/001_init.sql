@@ -6,15 +6,16 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     stock INTEGER DEFAULT 0,
-    category VARCHAR(255)
+    category VARCHAR(255),
+    image_url VARCHAR(255)
 );
 
 -- Тестовые данные
-INSERT INTO products (name, description, price, stock, category) 
+INSERT INTO products (name, description, price, stock, category, image_url) 
 VALUES 
-    ('Test Product 1', 'Description 1', 99.99, 10, 'Electronics'),
-    ('Test Product 2', 'Description 2', 149.99, 5, 'Books'),
-    ('Test Product 3', 'Description 3', 199.99, 15, 'Clothing')
+    ('Test Product 1', 'Description 1', 99.99, 10, 'Electronics', 'https://example.com/img1.jpg'),
+    ('Test Product 2', 'Description 2', 149.99, 5, 'Books', 'https://example.com/img2.jpg'),
+    ('Test Product 3', 'Description 3', 199.99, 15, 'Clothing', 'https://example.com/img3.jpg')
 ON CONFLICT DO NOTHING;
 
 -- Тестовые продукты
