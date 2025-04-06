@@ -17,13 +17,29 @@ jobs:
           username: ${{ secrets.SELECTEL_USERNAME }}
           key: ${{ secrets.SELECTEL_SSH_KEY }}
           script: |
-            cd /opt/shop-api
-            git pull
+            # Проверяем текущую директорию
+            pwd
+            ls -la
+            
+            # Переходим в директорию проекта
+            cd /opt/shop-api || exit 1
+            
+            # Проверяем статус git
+            git status
+            git pull || exit 1
             
             # Применяем миграции
-            psql -U postgres -d shop_api -c "ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(100) NOT NULL DEFAULT 'Без категории';"
+            psql -U postgres -d shop_api -f migrations/001_init.sql || exit 1
             
-            # Пересобираем и перезапускаем
-            go build -o shop-api cmd/main.go
-            sudo systemctl restart shop-api
-            sudo systemctl status shop-api
+            # Собираем приложение
+            go build -o shop-api cmd/main.go || exit 1
+            
+            # Перезапускаем сервис
+            sudo systemctl stop shop-api || exit 1
+            sudo systemctl start shop-api || exit 1
+            
+            # Проверяем статус
+            sudo systemctl status shop-api || exit 1
+            
+            # Проверяем, что сервис работает
+            curl -I http://localhost:8080/api/products || exit 1
