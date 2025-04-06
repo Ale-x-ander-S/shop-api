@@ -19,7 +19,11 @@ jobs:
           script: |
             cd /opt/shop-api
             git pull
-            psql -U postgres -d shop_api -f migrations/001_init.sql
+            
+            # Применяем миграции
+            psql -U postgres -d shop_api -c "ALTER TABLE products ADD COLUMN IF NOT EXISTS category VARCHAR(100) NOT NULL DEFAULT 'Без категории';"
+            
+            # Пересобираем и перезапускаем
             go build -o shop-api cmd/main.go
             sudo systemctl restart shop-api
             sudo systemctl status shop-api
