@@ -35,29 +35,31 @@ func NewRedisCache(addr string) *RedisCache {
 }
 
 func (r *RedisCache) GetProducts(ctx context.Context) ([]*models.Product, error) {
+	start := time.Now()
 	log.Printf("Redis: Trying to get products from cache")
 
 	var products []*models.Product
 	err := r.client.Get(ctx, "products").Scan(&products)
 	if err != nil {
-		log.Printf("Redis: Cache miss for products")
+		log.Printf("Redis: Cache miss for products (took %v)", time.Since(start))
 		return nil, err
 	}
 
-	log.Printf("Redis: Cache hit for products, found %d items", len(products))
+	log.Printf("Redis: Cache hit for products, found %d items (took %v)", len(products), time.Since(start))
 	return products, nil
 }
 
 func (r *RedisCache) SetProducts(ctx context.Context, products []*models.Product) error {
+	start := time.Now()
 	log.Printf("Redis: Setting %d products to cache", len(products))
 
 	err := r.client.Set(ctx, "products", products, 5*time.Minute).Err()
 	if err != nil {
-		log.Printf("Redis: Error setting products to cache: %v", err)
+		log.Printf("Redis: Error setting products to cache: %v (took %v)", err, time.Since(start))
 		return err
 	}
 
-	log.Printf("Redis: Successfully cached %d products", len(products))
+	log.Printf("Redis: Successfully cached %d products (took %v)", len(products), time.Since(start))
 	return nil
 }
 
