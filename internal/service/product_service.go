@@ -6,11 +6,13 @@ import (
 	"shop-api/internal/cache"
 	"shop-api/internal/models"
 	"shop-api/internal/repository"
+	"time"
 )
 
 type ProductService struct {
-	repo  repository.ProductRepository
-	cache *cache.RedisCache
+	repo      repository.ProductRepository
+	cache     *cache.RedisCache
+	fromCache bool
 }
 
 func NewProductService(repo repository.ProductRepository, cache *cache.RedisCache) *ProductService {
@@ -20,11 +22,16 @@ func NewProductService(repo repository.ProductRepository, cache *cache.RedisCach
 	}
 }
 
+func (s *ProductService) IsFromCache() bool {
+	return s.fromCache
+}
+
 func (s *ProductService) GetAllProducts(ctx context.Context) ([]*models.Product, error) {
 	// Пробуем получить из кэша
 	products, err := s.cache.GetProducts(ctx)
 	if err == nil && len(products) > 0 {
 		log.Printf("Cache hit: returning %d products from cache", len(products))
+		s.fromCache = true
 		return products, nil
 	}
 
@@ -40,6 +47,7 @@ func (s *ProductService) GetAllProducts(ctx context.Context) ([]*models.Product,
 		log.Printf("Error caching products: %v", err)
 	}
 
+	s.fromCache = false
 	return products, nil
 }
 
@@ -64,6 +72,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, req *models.CreatePr
 		log.Printf("Error updating cache: %v", err)
 	}
 
+	s.fromCache = false
 	return createdProduct, nil
 }
 
@@ -84,6 +93,7 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id int64, req *model
 		log.Printf("Error updating cache: %v", err)
 	}
 
+	s.fromCache = false
 	return nil
 }
 
@@ -104,5 +114,24 @@ func (s *ProductService) DeleteProduct(ctx context.Context, id int64) error {
 		log.Printf("Error updating cache: %v", err)
 	}
 
+	s.fromCache = false
 	return nil
+}
+
+func (s *ProductService) GetProducts() ([]models.Product, error) {
+	var products []models.Product
+	err := s.cache.Get("products", &products)
+	if err == nil {
+		s.fromCache = true
+		return products, nil
+	}
+
+	s.fromCache = false
+	products, err = s.repo.GetProducts()
+	if err != nil {
+		return nil, err
+	}
+
+	s.cache.Set("products", products, 5*time.Minute)
+	return products, nil
 }

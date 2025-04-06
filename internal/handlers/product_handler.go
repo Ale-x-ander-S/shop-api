@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -32,19 +31,20 @@ func NewProductHandler(service *service.ProductService) *ProductHandler {
 // @Failure 500 {string} string
 // @Router /products [get]
 func (h *ProductHandler) GetProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := h.service.GetAllProducts(r.Context())
+	products, err := h.service.GetProducts()
 	if err != nil {
-		log.Printf("Error getting products: %v", err)
 		http.Error(w, "Failed to get products", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(products); err != nil {
-		log.Printf("Error encoding products: %v", err)
-		http.Error(w, "Failed to encode products", http.StatusInternalServerError)
-		return
+	// Добавляем заголовки для отслеживания кэша
+	if h.service.IsFromCache() {
+		w.Header().Set("X-Cache", "HIT")
+	} else {
+		w.Header().Set("X-Cache", "MISS")
 	}
+
+	json.NewEncoder(w).Encode(products)
 }
 
 // CreateProduct godoc
