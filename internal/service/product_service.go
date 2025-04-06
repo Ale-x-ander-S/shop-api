@@ -53,12 +53,23 @@ func (s *ProductService) GetAllProducts(ctx context.Context) ([]*models.Product,
 }
 
 func (s *ProductService) GetProductByID(ctx context.Context, id int64) (*models.Product, error) {
-	return s.repo.GetByID(ctx, id)
+	return s.repo.GetByID(ctx, int(id))
+}
+
+func (s *ProductService) GetProduct(ctx context.Context, id int64) (*models.Product, error) {
+	return s.GetProductByID(ctx, id)
 }
 
 func (s *ProductService) CreateProduct(ctx context.Context, req *models.CreateProductRequest) (*models.Product, error) {
-	createdProduct, err := s.repo.Create(ctx, req)
-	if err != nil {
+	product := &models.Product{
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		Stock:       req.Stock,
+		Category:    req.Category,
+	}
+
+	if err := s.repo.Create(ctx, product); err != nil {
 		return nil, err
 	}
 
@@ -66,7 +77,7 @@ func (s *ProductService) CreateProduct(ctx context.Context, req *models.CreatePr
 	products, err := s.repo.GetAll(ctx)
 	if err != nil {
 		log.Printf("Error getting products for cache update: %v", err)
-		return createdProduct, nil // Возвращаем созданный продукт даже если не удалось обновить кэш
+		return product, nil
 	}
 
 	if err := s.cache.SetProducts(ctx, products); err != nil {
@@ -74,12 +85,20 @@ func (s *ProductService) CreateProduct(ctx context.Context, req *models.CreatePr
 	}
 
 	s.fromCache = false
-	return createdProduct, nil
+	return product, nil
 }
 
 func (s *ProductService) UpdateProduct(ctx context.Context, id int64, req *models.UpdateProductRequest) error {
-	err := s.repo.Update(ctx, id, req)
-	if err != nil {
+	product := &models.Product{
+		ID:          id,
+		Name:        req.Name,
+		Description: req.Description,
+		Price:       req.Price,
+		Stock:       req.Stock,
+		Category:    req.Category,
+	}
+
+	if err := s.repo.Update(ctx, product); err != nil {
 		return err
 	}
 
@@ -87,7 +106,7 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id int64, req *model
 	products, err := s.repo.GetAll(ctx)
 	if err != nil {
 		log.Printf("Error getting products for cache update: %v", err)
-		return nil // Возвращаем nil даже если не удалось обновить кэш
+		return nil
 	}
 
 	if err := s.cache.SetProducts(ctx, products); err != nil {
@@ -99,8 +118,7 @@ func (s *ProductService) UpdateProduct(ctx context.Context, id int64, req *model
 }
 
 func (s *ProductService) DeleteProduct(ctx context.Context, id int64) error {
-	err := s.repo.Delete(ctx, id)
-	if err != nil {
+	if err := s.repo.Delete(ctx, int(id)); err != nil {
 		return err
 	}
 
@@ -108,7 +126,7 @@ func (s *ProductService) DeleteProduct(ctx context.Context, id int64) error {
 	products, err := s.repo.GetAll(ctx)
 	if err != nil {
 		log.Printf("Error getting products for cache update: %v", err)
-		return nil // Возвращаем nil даже если не удалось обновить кэш
+		return nil
 	}
 
 	if err := s.cache.SetProducts(ctx, products); err != nil {
