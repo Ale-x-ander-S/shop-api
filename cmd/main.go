@@ -95,7 +95,7 @@ func main() {
 
 	// Запуск сервера
 	server := &http.Server{
-		Addr:         "0.0.0.0:" + cfg.ServerPort,
+		Addr:         "0.0.0.0:8080",
 		Handler:      r,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 15 * time.Second,
@@ -112,7 +112,7 @@ func main() {
 		}
 	}()
 
-	log.Printf("Server started on port %s\n", cfg.ServerPort)
+	log.Printf("Server started on port %s\n", "8080")
 
 	<-done
 	log.Println("Server is shutting down...")

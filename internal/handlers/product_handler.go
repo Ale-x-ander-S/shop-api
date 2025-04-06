@@ -3,71 +3,85 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
-	"shop-api/internal/models"
-	"shop-api/internal/service"
 	"strconv"
 
+	"errors"
+	"shop-api/internal/models"
+	"shop-api/internal/service"
+
 	"github.com/go-chi/chi/v5"
-	"github.com/go-playground/validator/v10"
 )
 
+var ErrProductNotFound = errors.New("product not found")
+
 type ProductHandler struct {
-	service  *service.ProductService
-	validate *validator.Validate
+	service *service.ProductService
 }
 
 func NewProductHandler(service *service.ProductService) *ProductHandler {
-	return &ProductHandler{
-		service:  service,
-		validate: validator.New(),
-	}
+	return &ProductHandler{service: service}
 }
 
-// @Summary Создать новый продукт
-// @Description Создает новый продукт в магазине
+// @Summary Create a new product
+// @Description Create a new product with the provided details
 // @Tags products
 // @Accept json
 // @Produce json
-// @Param product body models.CreateProductRequest true "Данные продукта"
-// @Success 201 {object} map[string]int64
-// @Failure 400 {string} string
-// @Failure 500 {string} string
-// @Router /products [post]
+// @Param product body models.Product true "Product details"
+// @Success 201 {object} models.Product
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/products [post]
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
-	var product models.CreateProductRequest
+	var product models.Product
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.validate.Struct(product); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	id, err := h.service.CreateProduct(r.Context(), &product)
+	createdProduct, err := h.service.CreateProduct(r.Context(), &product)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to create product", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]int64{"id": id})
+	json.NewEncoder(w).Encode(createdProduct)
 }
 
-// @Summary Получить продукт по ID
-// @Description Возвращает информацию о продукте по его ID
+// @Summary Get all products
+// @Description Get a list of all products
 // @Tags products
+// @Accept json
 // @Produce json
-// @Param id path int true "ID продукта"
+// @Success 200 {array} models.Product
+// @Failure 500 {object} map[string]string
+// @Router /api/products [get]
+func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) {
+	products, err := h.service.GetAllProducts(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to get products", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(products)
+}
+
+// @Summary Get a product by ID
+// @Description Get a product by its ID
+// @Tags products
+// @Accept json
+// @Produce json
+// @Param id path int true "Product ID"
 // @Success 200 {object} models.Product
-// @Failure 400 {string} string
-// @Failure 404 {string} string
-// @Failure 500 {string} string
-// @Router /products/{id} [get]
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/products/{id} [get]
 func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)
 		return
@@ -75,12 +89,11 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 
 	product, err := h.service.GetProduct(r.Context(), id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if product == nil {
-		http.Error(w, "Product not found", http.StatusNotFound)
+		if err == ErrProductNotFound {
+			http.Error(w, "Product not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to get product", http.StatusInternalServerError)
 		return
 	}
 
@@ -88,79 +101,72 @@ func (h *ProductHandler) GetProduct(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(product)
 }
 
-// @Summary Обновить продукт
-// @Description Обновляет информацию о продукте
+// @Summary Update a product
+// @Description Update a product with the provided details
 // @Tags products
 // @Accept json
-// @Param id path int true "ID продукта"
-// @Param product body models.UpdateProductRequest true "Данные для обновления"
-// @Success 204
-// @Failure 400 {string} string
-// @Failure 500 {string} string
-// @Router /products/{id} [put]
+// @Produce json
+// @Param id path int true "Product ID"
+// @Param product body models.Product true "Product details"
+// @Success 200 {object} models.Product
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/products/{id} [put]
 func (h *ProductHandler) UpdateProduct(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)
 		return
 	}
 
-	var product models.UpdateProductRequest
+	var product models.Product
 	if err := json.NewDecoder(r.Body).Decode(&product); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.validate.Struct(product); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	product.ID = id
+	updatedProduct, err := h.service.UpdateProduct(r.Context(), &product)
+	if err != nil {
+		if err == ErrProductNotFound {
+			http.Error(w, "Product not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to update product", http.StatusInternalServerError)
 		return
 	}
 
-	if err := h.service.UpdateProduct(r.Context(), id, &product); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(updatedProduct)
 }
 
-// @Summary Удалить продукт
-// @Description Удаляет продукт по его ID
+// @Summary Delete a product
+// @Description Delete a product by its ID
 // @Tags products
-// @Param id path int true "ID продукта"
-// @Success 204
-// @Failure 400 {string} string
-// @Failure 500 {string} string
-// @Router /products/{id} [delete]
+// @Accept json
+// @Produce json
+// @Param id path int true "Product ID"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /api/products/{id} [delete]
 func (h *ProductHandler) DeleteProduct(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
 		http.Error(w, "Invalid product ID", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.service.DeleteProduct(r.Context(), id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err == ErrProductNotFound {
+			http.Error(w, "Product not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to delete product", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// @Summary Получить все продукты
-// @Description Возвращает список всех продуктов
-// @Tags products
-// @Produce json
-// @Success 200 {array} models.Product
-// @Failure 500 {string} string
-// @Router /products [get]
-func (h *ProductHandler) GetAllProducts(w http.ResponseWriter, r *http.Request) {
-	products, err := h.service.GetAllProducts(r.Context())
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(products)
 }
