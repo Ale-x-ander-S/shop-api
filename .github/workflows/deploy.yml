@@ -41,5 +41,11 @@ jobs:
             # Проверяем статус
             sudo systemctl status shop-api || exit 1
             
-            # Проверяем, что сервис работает
-            curl -I http://localhost:8080/api/products || exit 1
+            # Ждем 5 секунд, пока сервис запустится
+            sleep 5
+            
+            # Проверяем, что сервис работает на IP сервера
+            curl -I http://91.105.199.172:8080/api/products || exit 1
+            
+            # Проверяем Swagger
+            curl -I http://91.105.199.172:8080/swagger/index.html || exit 1
