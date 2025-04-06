@@ -18,6 +18,22 @@ jobs:
       - name: Build
         run: go build -o shop-api cmd/main.go
       
+      - name: Check Secrets
+        run: |
+          echo "Checking secrets..."
+          if [ -z "${{ secrets.SERVER_HOST }}" ]; then
+            echo "SERVER_HOST is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SERVER_USER }}" ]; then
+            echo "SERVER_USER is not set"
+            exit 1
+          fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "SSH_PRIVATE_KEY is not set"
+            exit 1
+          fi
+      
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
         with:
