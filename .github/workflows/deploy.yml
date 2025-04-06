@@ -13,8 +13,8 @@ jobs:
     - name: Copy files to server
       uses: appleboy/scp-action@master
       with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
+        host: 91.105.199.172
+        username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         source: "."
         target: "/opt/shop-api"
@@ -22,17 +22,17 @@ jobs:
     - name: Execute deploy commands
       uses: appleboy/ssh-action@master
       with:
-        host: ${{ secrets.SERVER_HOST }}
-        username: ${{ secrets.SERVER_USER }}
+        host: 91.105.199.172
+        username: root
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           cd /opt/shop-api
           
           # Backup DB
-          PGPASSWORD=${{ secrets.DB_PASSWORD }} pg_dump -h localhost -U postgres shop > backup_$(date +%Y%m%d_%H%M%S).sql
+          PGPASSWORD=${{ secrets.POSTGRES_PASSWORD }} pg_dump -h localhost -U postgres shop > backup_$(date +%Y%m%d_%H%M%S).sql
           
           # Apply migrations
-          PGPASSWORD=${{ secrets.DB_PASSWORD }} psql -h localhost -U postgres -d shop -f migrations/001_init.sql
+          PGPASSWORD=${{ secrets.POSTGRES_PASSWORD }} psql -h localhost -U postgres -d shop -f migrations/001_init.sql
           
           # Build
           go build -o shop-api cmd/main.go
