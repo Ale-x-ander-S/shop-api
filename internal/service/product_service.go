@@ -71,17 +71,20 @@ func (s *ProductService) GetAllProducts(ctx context.Context) ([]*models.Product,
 	if products, err := s.cache.GetProducts(ctx); err == nil && products != nil {
 		log.Printf("Cache hit: returning %d products from cache", len(products))
 		return products, nil
+	} else if err != nil {
+		log.Printf("Cache error: %v, falling back to database", err)
 	}
 
-	// Если в кэше нет, получаем из БД
+	// Если в кэше нет или произошла ошибка, получаем из БД
 	products, err := s.repo.GetAll(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// Сохраняем в кэш
+	// Пробуем сохранить в кэш
 	if err := s.cache.SetProducts(ctx, products); err != nil {
 		log.Printf("Failed to cache products: %v", err)
+		// Продолжаем работу даже если кэш недоступен
 	} else {
 		log.Printf("Cached %d products", len(products))
 	}

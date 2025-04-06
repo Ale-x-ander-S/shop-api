@@ -48,7 +48,7 @@ func main() {
 	defer db.Close()
 
 	// Redis cache
-	redisCache := cache.NewRedisCache("91.105.199.172:6379")
+	redisCache := cache.NewRedisCache("127.0.0.1:6379")
 
 	// Инициализация репозитория, сервиса и обработчиков
 	productRepo := repository.NewProductRepository(db)
