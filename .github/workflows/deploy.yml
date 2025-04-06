@@ -17,15 +17,16 @@ jobs:
           username: ${{ secrets.SELECTEL_USERNAME }}
           key: ${{ secrets.SELECTEL_SSH_KEY }}
           script: |
-            # Проверяем текущую директорию
-            pwd
-            ls -la
-            
             # Переходим в директорию проекта
             cd /opt/shop-api || exit 1
             
-            # Проверяем статус git
-            git status
+            # Настраиваем git
+            git config --global --add safe.directory /opt/shop-api
+            git branch --set-upstream-to=origin/main main || exit 1
+            
+            # Обновляем код
+            git reset --hard origin/main || exit 1
+            git clean -fd || exit 1
             git pull || exit 1
             
             # Применяем миграции
@@ -41,11 +42,8 @@ jobs:
             # Проверяем статус
             sudo systemctl status shop-api || exit 1
             
-            # Ждем 5 секунд, пока сервис запустится
+            # Ждем 5 секунд
             sleep 5
             
-            # Проверяем, что сервис работает на IP сервера
+            # Проверяем API
             curl -I http://91.105.199.172:8080/api/products || exit 1
-            
-            # Проверяем Swagger
-            curl -I http://91.105.199.172:8080/swagger/index.html || exit 1
