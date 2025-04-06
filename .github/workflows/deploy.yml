@@ -29,6 +29,7 @@ jobs:
           source: "main"
           target: "/home/deploy/shop-api"
           strip_components: 0
+          timeout: 30s
 
       - name: Restart service
         uses: appleboy/ssh-action@master
@@ -38,4 +39,5 @@ jobs:
           key: ${{ secrets.SELECTEL_SSH_KEY }}
           script: |
             cd /home/deploy/shop-api
-            sudo systemctl restart shop-api 
+            sudo systemctl restart shop-api
+          timeout: 30s 
