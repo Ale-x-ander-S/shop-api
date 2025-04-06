@@ -23,7 +23,7 @@ import (
 
 // @title Shop API
 // @version 1.0
-// @description API для интернет-магазина
+// @description REST API для интернет-магазина
 // @host 91.105.199.172:8080
 // @BasePath /api
 // @schemes http
@@ -81,6 +81,9 @@ func main() {
 			"filter":                   "true",
 			"showExtensions":           "true",
 			"showCommonExtensions":     "true",
+			"persistAuthorization":     "true",
+			"deepLinking":              "true",
+			"syntaxHighlight.theme":    "monokai",
 		}),
 	))
 
